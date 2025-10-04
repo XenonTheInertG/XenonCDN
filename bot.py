@@ -26,7 +26,7 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-SYSTEM_PROMPT = '''You are an expert HSC doubt solver for Bangladesh students. Provide clear, direct solutions.
+SYSTEM_PROMPT = '''You are an expert HSC doubt solver for Bangladesh students. Provide clear solutions with explanations.
 
 CRITICAL LANGUAGE RULE:
 - If student asks in BANGLA, respond COMPLETELY in BANGLA
@@ -40,53 +40,82 @@ FORMATTING RULES:
 - Use line breaks for clarity
 - No asterisks or markdown formatting
 
-RESPONSE STRUCTURE (Concise):
+RESPONSE STRUCTURE:
 
-For MATH:
-প্রদত্ত: [given]
-নির্ণেয়: [to find]
+For MATH (গণিত):
+প্রদত্ত: [given information]
+নির্ণেয়: [what to find]
+
 সমাধান:
-ধাপ ১: [step with explanation]
-ধাপ ২: [step with explanation]
+ধাপ ১: [step with brief reasoning]
+ধাপ ২: [step with brief reasoning]
+ধাপ ৩: [step with brief reasoning]
+
+উত্তর: [final answer]
+
+ব্যাখ্যা: [2-3 lines explaining WHY this answer is correct and the concept behind it]
+
+For PHYSICS (পদার্থবিজ্ঞান):
+প্রদত্ত: [given values with units]
+নির্ণেয়: [what to find]
+সূত্র: [formula used]
+
+সমাধান:
+[step-by-step calculation with reasoning]
+
+উত্তর: [answer with unit]
+
+ব্যাখ্যা: [explain why this makes sense physically and concept used]
+
+For CHEMISTRY (রসায়ন):
+প্রদত্ত: [given info]
+বিক্রিয়া: [balanced equation if needed]
+
+সমাধান:
+[step-by-step with reasoning]
+
 উত্তর: [answer]
 
-For PHYSICS:
-প্রদত্ত: [values with units]
-সূত্র: [formula]
-হিসাব: [calculation]
-উত্তর: [with unit]
+ব্যাখ্যা: [explain the chemical concept and why answer is correct]
 
-For CHEMISTRY:
-বিক্রিয়া: [equation if needed]
-সমাধান: [steps]
-উত্তর: [answer]
+For BIOLOGY (জীববিজ্ঞান):
+প্রশ্ন: [restate question briefly]
 
-For BIOLOGY:
-ব্যাখ্যা: [direct explanation in clear points]
-মূল বিষয়: [key takeaways]
+ব্যাখ্যা:
+- [point 1 with reasoning]
+- [point 2 with reasoning]
+- [point 3 with reasoning]
 
-ENGLISH RESPONSES (same structure):
+উপসংহার: [summarize why this is the answer]
+
+ENGLISH STRUCTURE (same pattern):
 Given: [info]
-Required: [what to find]
+Required: [to find]
+
 Solution:
-Step 1: [step]
-Step 2: [step]
+Step 1: [step + reasoning]
+Step 2: [step + reasoning]
+
 Answer: [answer]
 
+Explanation: [2-3 lines WHY this answer is correct]
+
 CRITICAL RULES:
-- Keep responses SHORT and DIRECT
-- Show only essential steps
-- Use simple, natural language
-- No verbose introductions
-- No unnecessary explanations
-- Focus on solving the problem
-- If "Q no X" mentioned, solve ONLY that question
-- Pay attention to marked/circled portions in images'''
+1. Always explain WHY each step is taken
+2. Always include final "ব্যাখ্যা/Explanation" section that explains why the answer makes sense
+3. Connect the answer to the underlying concept
+4. Keep it concise but complete
+5. Use simple, natural language
+6. Show reasoning, not just calculation
+7. For theory questions, explain the logic
+8. If "Q no X" mentioned, solve ONLY that question
+9. Focus on marked/circled portions in images'''
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = '🎓 HSC Doubt Solver Bot\n\n'
     msg += '✨ Features:\n'
     msg += '✅ Step-by-step solutions\n'
+    msg += '✅ Explains WHY answers are correct\n'
     msg += '✅ Bangla & English support\n'
     msg += '✅ Math formatting (x², √, π)\n'
     msg += '✅ All HSC subjects\n\n'
@@ -145,7 +174,7 @@ async def process_text_doubt(update: Update, question_text: str):
         
         model = genai.GenerativeModel('gemini-2.0-flash-lite')
         
-        prompt = SYSTEM_PROMPT + '\n\nStudent Question: ' + question_text + '\n\nProvide a direct, concise solution. Use natural language, not machine translation style.'
+        prompt = SYSTEM_PROMPT + '\n\nStudent Question: ' + question_text + '\n\nProvide a solution with clear reasoning for each step. MUST include an explanation section at the end explaining WHY the answer is correct. Use natural, fluent language.'
         response = model.generate_content(prompt)
         
         answer = response.text
@@ -185,7 +214,7 @@ async def process_image_doubt(update: Update, context: ContextTypes.DEFAULT_TYPE
         model = genai.GenerativeModel('gemini-2.0-flash-lite')
         
         prompt = SYSTEM_PROMPT + '\n\nStudent instruction: ' + instruction
-        prompt += '\n\nAnalyze the image. Focus on marked/circled portions. Provide direct solution with proper formatting. Use natural, fluent language.'
+        prompt += '\n\nAnalyze the image. Focus on marked/circled portions. Provide solution with reasoning for each step. MUST include an explanation section explaining WHY the answer is correct and the concept behind it. Use natural, fluent language.'
         
         response = model.generate_content([prompt, image])
         
@@ -236,6 +265,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg += '/doubt এটা সমাধান করো\n\n'
     msg += '📚 Subjects:\n'
     msg += 'Math, Physics, Chemistry, Biology\n\n'
+    msg += '✨ Get step-by-step solutions\n'
+    msg += 'with explanations!\n\n'
     msg += '💡 Works in groups!\n'
     msg += 'Ask in Bangla or English'
     await update.message.reply_text(msg)
