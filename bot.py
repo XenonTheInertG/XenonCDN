@@ -26,70 +26,76 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-SYSTEM_PROMPT = '''You are an expert HSC doubt solver for Bangladesh students. Provide clear, step-by-step solutions.
+SYSTEM_PROMPT = '''You are an expert HSC doubt solver for Bangladesh students. Provide clear, direct solutions.
 
 CRITICAL LANGUAGE RULE:
-- If the student asks in BANGLA, respond COMPLETELY in BANGLA
-- If the student asks in ENGLISH, respond COMPLETELY in ENGLISH
-- NEVER mix languages in a single response
+- If student asks in BANGLA, respond COMPLETELY in BANGLA
+- If student asks in ENGLISH, respond COMPLETELY in ENGLISH
+- NEVER mix languages
+- Use natural, fluent language (not translation-style text)
 
 FORMATTING RULES:
-Use these Unicode symbols for better readability:
-• Superscripts: ², ³, ⁴, ⁿ, ⁺, ⁻
-• Subscripts: ₁, ₂, ₃, ₄
-• Math symbols: √, ×, ÷, ±, ≈, ≠, ≤, ≥, ∞
-• Greek letters: α, β, γ, θ, λ, π, σ, Δ, Ω
-• Arrows: → (reaction/result), ⇌ (equilibrium)
-• Special: ∴ (therefore), ∵ (because)
+- Use Unicode symbols: ², ³, √, ×, ÷, ±, ≈, ≠, ≤, ≥, π, θ, α, β, γ, Δ, →, ⇌
+- Keep formatting clean and readable
+- Use line breaks for clarity
+- No asterisks or markdown formatting
 
-RESPONSE STRUCTURE (Keep it concise but complete):
+RESPONSE STRUCTURE (Concise):
 
-For MATH (গণিত):
-• প্রদত্ত/Given: [list given info]
-• নির্ণেয়/To Find: [what to find]
-• সমাধান/Solution:
-  Step 1: [explain step]
-  Step 2: [explain step]
-  ...
-• উত্তর/Answer: [final answer in box]
+For MATH:
+প্রদত্ত: [given]
+নির্ণেয়: [to find]
+সমাধান:
+ধাপ ১: [step with explanation]
+ধাপ ২: [step with explanation]
+উত্তর: [answer]
 
-For PHYSICS (পদার্থবিজ্ঞান):
-• প্রদত্ত/Given: [values with units]
-• সূত্র/Formula: [formula]
-• সমাধান/Solution: [step by step with calculations]
-• উত্তর/Answer: [with unit]
+For PHYSICS:
+প্রদত্ত: [values with units]
+সূত্র: [formula]
+হিসাব: [calculation]
+উত্তর: [with unit]
 
-For CHEMISTRY (রসায়ন):
-• বিক্রিয়া/Reaction: [balanced equation if needed]
-• সমাধান/Solution: [step by step]
-• উত্তর/Answer: [final answer]
+For CHEMISTRY:
+বিক্রিয়া: [equation if needed]
+সমাধান: [steps]
+উত্তর: [answer]
 
-For BIOLOGY (জীববিজ্ঞান):
-• সংজ্ঞা/Definition: [if needed]
-• ব্যাখ্যা/Explanation: [clear points]
-• মূল বিষয়/Key Points: [summary]
+For BIOLOGY:
+ব্যাখ্যা: [direct explanation in clear points]
+মূল বিষয়: [key takeaways]
 
-IMPORTANT:
-- Keep solutions concise but complete
-- Show key steps only, not every minor calculation
-- Use proper formatting with symbols
-- If image has marked portions, focus on those
-- If "Q no X" is mentioned, solve only that question
-- Make it student-friendly and easy to understand'''
+ENGLISH RESPONSES (same structure):
+Given: [info]
+Required: [what to find]
+Solution:
+Step 1: [step]
+Step 2: [step]
+Answer: [answer]
+
+CRITICAL RULES:
+- Keep responses SHORT and DIRECT
+- Show only essential steps
+- Use simple, natural language
+- No verbose introductions
+- No unnecessary explanations
+- Focus on solving the problem
+- If "Q no X" mentioned, solve ONLY that question
+- Pay attention to marked/circled portions in images'''
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = '🎓 HSC Doubt Solver Bot\n\n'
     msg += '✨ Features:\n'
     msg += '✅ Step-by-step solutions\n'
     msg += '✅ Bangla & English support\n'
-    msg += '✅ Proper math formatting\n'
+    msg += '✅ Math formatting (x², √, π)\n'
     msg += '✅ All HSC subjects\n\n'
-    msg += '📝 Usage:\n\n'
-    msg += 'Text: /doubt solve x² + 5x + 6 = 0\n\n'
-    msg += 'Image: Send photo with caption\n'
+    msg += '📝 How to use:\n\n'
+    msg += 'Text:\n/doubt solve x² + 5x + 6 = 0\n\n'
+    msg += 'Image with caption:\n'
     msg += '/doubt solve Q no 5\n'
-    msg += '/doubt এই প্রশ্ন সমাধান করো\n\n'
-    msg += 'Type /help for details!'
+    msg += '/doubt এটা সমাধান করো\n\n'
+    msg += 'Type /help for more!'
     await update.message.reply_text(msg)
 
 async def doubt_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -107,7 +113,7 @@ async def doubt_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 instruction = caption.strip()
         
         if not instruction:
-            msg = '⚠️ Please provide instruction!\n\n'
+            msg = '⚠️ নির্দেশনা দাও / Give instruction!\n\n'
             msg += 'Examples:\n'
             msg += '/doubt solve Q no 5\n'
             msg += '/doubt এটা সমাধান করো'
@@ -128,8 +134,9 @@ async def doubt_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     else:
         msg = '⚠️ Usage:\n\n'
-        msg += 'Text: /doubt solve x² + 5x + 6 = 0\n\n'
-        msg += 'Image: /doubt solve Q no 5'
+        msg += 'Text: /doubt solve x² - 4 = 0\n\n'
+        msg += 'Image: Send photo with caption\n'
+        msg += '/doubt solve Q no 5'
         await update.message.reply_text(msg)
 
 async def process_text_doubt(update: Update, question_text: str):
@@ -138,26 +145,28 @@ async def process_text_doubt(update: Update, question_text: str):
         
         model = genai.GenerativeModel('gemini-2.0-flash-lite')
         
-        prompt = SYSTEM_PROMPT + '\n\nStudent Question: ' + question_text
+        prompt = SYSTEM_PROMPT + '\n\nStudent Question: ' + question_text + '\n\nProvide a direct, concise solution. Use natural language, not machine translation style.'
         response = model.generate_content(prompt)
         
         answer = response.text
         
+        # Clean up any asterisks or markdown
+        answer = answer.replace('**', '')
+        answer = answer.replace('*', '')
+        
         if len(answer) > 4000:
             parts = split_message(answer)
             for i, part in enumerate(parts):
-                header = '📚 সমাধান ' if 'া' in question_text or 'ো' in question_text else '📚 Solution '
                 if i == 0:
-                    await update.message.reply_text(header + '(Part ' + str(i+1) + '):\n\n' + part)
+                    await update.message.reply_text('📚 ' + part)
                 else:
-                    await update.message.reply_text('Part ' + str(i+1) + ':\n\n' + part)
+                    await update.message.reply_text(part)
         else:
-            header = '📚 সমাধান:\n\n' if 'া' in question_text or 'ো' in question_text else '📚 Solution:\n\n'
-            await update.message.reply_text(header + answer)
+            await update.message.reply_text('📚 ' + answer)
         
     except Exception as e:
         logger.error('Error: ' + str(e))
-        await update.message.reply_text('❌ Error occurred. Try again.\nসমস্যা হয়েছে। আবার চেষ্টা করো।')
+        await update.message.reply_text('❌ সমস্যা হয়েছে / Error occurred')
 
 async def process_image_doubt(update: Update, context: ContextTypes.DEFAULT_TYPE, instruction: str, reply=False):
     try:
@@ -176,27 +185,29 @@ async def process_image_doubt(update: Update, context: ContextTypes.DEFAULT_TYPE
         model = genai.GenerativeModel('gemini-2.0-flash-lite')
         
         prompt = SYSTEM_PROMPT + '\n\nStudent instruction: ' + instruction
-        prompt += '\n\nAnalyze the image. Focus on marked/circled portions. Provide step-by-step solution.'
+        prompt += '\n\nAnalyze the image. Focus on marked/circled portions. Provide direct solution with proper formatting. Use natural, fluent language.'
         
         response = model.generate_content([prompt, image])
         
         answer = response.text
         
+        # Clean up any asterisks or markdown
+        answer = answer.replace('**', '')
+        answer = answer.replace('*', '')
+        
         if len(answer) > 4000:
             parts = split_message(answer)
             for i, part in enumerate(parts):
-                header = '📚 সমাধান ' if 'া' in instruction or 'ো' in instruction else '📚 Solution '
                 if i == 0:
-                    await update.message.reply_text(header + '(Part ' + str(i+1) + '):\n\n' + part)
+                    await update.message.reply_text('📚 ' + part)
                 else:
-                    await update.message.reply_text('Part ' + str(i+1) + ':\n\n' + part)
+                    await update.message.reply_text(part)
         else:
-            header = '📚 সমাধান:\n\n' if 'া' in instruction or 'ো' in instruction else '📚 Solution:\n\n'
-            await update.message.reply_text(header + answer)
+            await update.message.reply_text('📚 ' + answer)
         
     except Exception as e:
         logger.error('Error: ' + str(e))
-        await update.message.reply_text('❌ Could not process image.\nছবি প্রসেস করতে পারিনি।')
+        await update.message.reply_text('❌ ছবি প্রসেস করতে পারিনি / Could not process image')
 
 def split_message(text, max_length=4000):
     parts = []
@@ -210,26 +221,27 @@ def split_message(text, max_length=4000):
     return parts
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = '🆘 Help\n\n'
+    msg = '🆘 Help - HSC Doubt Solver\n\n'
     msg += '📋 Commands:\n'
-    msg += '/start - Start bot\n'
+    msg += '/start - Start\n'
     msg += '/doubt - Ask question\n'
-    msg += '/help - Show help\n\n'
-    msg += '📝 Text Questions:\n'
+    msg += '/help - Help\n\n'
+    msg += '📝 Usage:\n\n'
+    msg += '1. Text question:\n'
     msg += '/doubt solve x² + 5x + 6 = 0\n'
-    msg += '/doubt ফটোসিন্থেসিস ব্যাখ্যা করো\n\n'
-    msg += '📸 Image Questions:\n'
-    msg += 'Send photo with caption:\n'
+    msg += '/doubt ফটোসিন্থেসিস কি\n\n'
+    msg += '2. Image question:\n'
+    msg += 'Send photo + caption:\n'
     msg += '/doubt solve Q no 5\n'
-    msg += '/doubt এই প্রশ্ন সমাধান করো\n\n'
+    msg += '/doubt এটা সমাধান করো\n\n'
     msg += '📚 Subjects:\n'
-    msg += 'Math, Physics, Chemistry, Biology\n'
-    msg += 'গণিত, পদার্থ, রসায়ন, জীববিজ্ঞান\n\n'
-    msg += '💡 Ask in Bangla or English!'
+    msg += 'Math, Physics, Chemistry, Biology\n\n'
+    msg += '💡 Works in groups!\n'
+    msg += 'Ask in Bangla or English'
     await update.message.reply_text(msg)
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.error('Update caused error: ' + str(context.error))
+    logger.error('Error: ' + str(context.error))
 
 def main():
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
