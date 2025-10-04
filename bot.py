@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logging.basicConfig(
-format=’%(asctime)s - %(name)s - %(levelname)s - %(message)s’,
+format=”%(asctime)s - %(name)s - %(levelname)s - %(message)s”,
 level=logging.INFO
 )
 logger = logging.getLogger(**name**)
@@ -34,21 +34,21 @@ RESPONSE RULES:
 1. If image has marked/circled portions, focus on those
 1. Reference HSC textbook concepts when relevant
 1. Format: Use short paragraphs, bullet points for lists
-1. If question specifies “Q no X”, solve only that question
+1. If question specifies Q no X, solve only that question
 
 ANSWER STRUCTURE:
 
 - Direct answer first
-- Brief explanation (2-3 lines max)
+- Brief explanation 2-3 lines max
 - Key steps if needed
 - Done
 
 Keep it SHORT and CLEAR. Students want quick help, not essays.”””
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-welcome_message = “”“🎓 HSC Doubt Solver Bot
+welcome_message = “”“HSC Doubt Solver Bot
 
-I’ll help you solve your HSC questions quickly!
+I will help you solve your HSC questions quickly!
 
 How to use:
 
@@ -62,10 +62,10 @@ Send image with caption:
 /doubt solve all problems
 
 Features:
-✅ Works in groups
-✅ Supports Bangla & English
-✅ Focuses on HSC curriculum
-✅ Quick and precise answers
+Works in groups
+Supports Bangla and English
+Focuses on HSC curriculum
+Quick and precise answers
 
 Type /help for more info!”””
 await update.message.reply_text(welcome_message)
@@ -75,19 +75,19 @@ instruction = “”
 
 ```
 if context.args:
-    instruction = ' '.join(context.args)
+    instruction = " ".join(context.args)
 
 if update.message.photo:
     if update.message.caption:
         caption = update.message.caption
-        if caption.startswith('/doubt'):
-            instruction = caption.replace('/doubt', '').strip()
+        if caption.startswith("/doubt"):
+            instruction = caption.replace("/doubt", "").strip()
         else:
             instruction = caption.strip()
     
     if not instruction:
         await update.message.reply_text(
-            "⚠️ Please provide instruction with the image!\n\n"
+            "Please provide instruction with the image!\n\n"
             "Examples:\n"
             "/doubt solve Q no 5\n"
             "/doubt explain this\n"
@@ -100,7 +100,7 @@ if update.message.photo:
 elif update.message.reply_to_message and update.message.reply_to_message.photo:
     if not instruction:
         await update.message.reply_text(
-            "⚠️ Please provide instruction!\n\n"
+            "Please provide instruction!\n\n"
             "Example:\n"
             "/doubt solve Q no 3"
         )
@@ -113,7 +113,7 @@ elif instruction:
 
 else:
     await update.message.reply_text(
-        "⚠️ Usage:\n\n"
+        "Usage:\n\n"
         "For text questions:\n"
         "/doubt solve x² + 5x + 6 = 0\n\n"
         "For image questions:\n"
@@ -128,20 +128,20 @@ try:
 await update.message.chat.send_action(action=“typing”)
 
 ```
-    model = genai.GenerativeModel('gemini-2.0-flash-lite')
+    model = genai.GenerativeModel("gemini-2.0-flash-lite")
     
     response = model.generate_content([
         SYSTEM_PROMPT,
-        f"\n\nStudent's Question: {question_text}\n\nProvide a precise solution."
+        "\n\nStudent's Question: " + question_text + "\n\nProvide a precise solution."
     ])
     
     answer = response.text
     
-    await update.message.reply_text(f"📚 Solution:\n\n{answer}")
+    await update.message.reply_text("Solution:\n\n" + answer)
     
 except Exception as e:
-    logger.error(f"Error processing text doubt: {e}")
-    await update.message.reply_text("❌ Sorry, an error occurred. Please try again.")
+    logger.error("Error processing text doubt: " + str(e))
+    await update.message.reply_text("Sorry, an error occurred. Please try again.")
 ```
 
 async def process_image_doubt(update: Update, context: ContextTypes.DEFAULT_TYPE, instruction: str, reply=False):
@@ -162,25 +162,25 @@ await update.message.chat.send_action(action=“typing”)
         mime_type="image/jpeg"
     )
     
-    model = genai.GenerativeModel('gemini-2.0-flash-lite')
+    model = genai.GenerativeModel("gemini-2.0-flash-lite")
     
-    prompt = f"{SYSTEM_PROMPT}\n\nStudent's instruction: {instruction}\n\nAnalyze the image and provide a precise solution. Pay attention to any marked or circled portions."
+    prompt = SYSTEM_PROMPT + "\n\nStudent's instruction: " + instruction + "\n\nAnalyze the image and provide a precise solution. Pay attention to any marked or circled portions."
     
     response = model.generate_content([prompt, uploaded_file])
     
     answer = response.text
     
-    await update.message.reply_text(f"📚 Solution:\n\n{answer}")
+    await update.message.reply_text("Solution:\n\n" + answer)
     
     uploaded_file.delete()
     
 except Exception as e:
-    logger.error(f"Error processing image doubt: {e}")
-    await update.message.reply_text("❌ Sorry, couldn't process the image. Please try again.")
+    logger.error("Error processing image doubt: " + str(e))
+    await update.message.reply_text("Sorry, could not process the image. Please try again.")
 ```
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-help_text = “”“🆘 Help - HSC Doubt Solver
+help_text = “”“Help - HSC Doubt Solver
 
 Commands:
 /start - Start the bot
@@ -203,10 +203,10 @@ How to ask questions:
    /doubt solve Q no 3
 
 Tips:
-• Be specific (e.g., “Q no 5” instead of “this”)
-• Mention if you want all questions solved
-• Circle or mark specific parts if needed
-• Ask in Bangla or English - both work!
+Be specific like Q no 5 instead of this
+Mention if you want all questions solved
+Circle or mark specific parts if needed
+Ask in Bangla or English - both work!
 
 Subjects Covered:
 Math, Physics, Chemistry, Biology, English, Bangla, and more HSC topics!
@@ -215,7 +215,7 @@ Works in groups! Just use the commands above.”””
 await update.message.reply_text(help_text)
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-logger.error(f”Update {update} caused error {context.error}”)
+logger.error(“Update “ + str(update) + “ caused error “ + str(context.error))
 
 def main():
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -226,7 +226,7 @@ application.add_handler(CommandHandler("help", help_command))
 application.add_handler(CommandHandler("doubt", doubt_command))
 
 application.add_handler(MessageHandler(
-    filters.PHOTO & filters.CAPTION & filters.Regex(r'^/doubt'),
+    filters.PHOTO & filters.CAPTION & filters.Regex(r"^/doubt"),
     doubt_command
 ))
 
@@ -236,5 +236,5 @@ logger.info("Bot started...")
 application.run_polling(allowed_updates=Update.ALL_TYPES)
 ```
 
-if **name** == ‘**main**’:
+if **name** == “**main**”:
 main()
