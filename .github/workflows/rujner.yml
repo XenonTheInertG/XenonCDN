@@ -44,7 +44,6 @@ jobs:
       - name: Install Python dependencies, Chromium & Poppler-utils
         run: |
           sudo apt-get update
-          sudo apt-get install -y --fix-missing poppler-data libpoppler-dev poppler-utils
           cd CD
           
           pip install -r requirements.txt
