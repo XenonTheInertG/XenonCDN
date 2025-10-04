@@ -1,0 +1,79 @@
+name: CD for Testing bots
+
+on:
+  # Manual trigger using GitHub Actions UI
+  workflow_dispatch:
+  
+  # Automatically trigger on push to main branch
+  push:
+    branches:
+      - main
+
+env:
+  mail: "github-actions@github.com"
+  username: "github-actions[bot]"
+  ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
+
+jobs:
+  run-bot:
+    name: CD for Testing bots
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours timeout for the entire job
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        timeout-minutes: 3
+        continue-on-error: false
+        
+      - name: Clone The Repository
+        run: |
+          git clone https://github.com/XenonTheInertG/XenonCDN CD
+          cd CD
+        timeout-minutes: 5
+        continue-on-error: false
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+        timeout-minutes: 5
+        continue-on-error: false
+          
+      - name: Install Python dependencies, Chromium & Poppler-utils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --fix-missing poppler-data libpoppler-dev poppler-utils
+          cd CD
+          
+          pip install -r requirements.txt
+        timeout-minutes: 10
+        continue-on-error: false
+         
+      - name: Run the bot
+        run: |
+          cd CD 
+          python main.py
+        timeout-minutes: 340  # Almost 6 hours for the bot itself
+        continue-on-error: true
+
+  looper:
+    name: CD for Testing bots & keep it running
+    needs: run-bot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Git Configs & Secrets
+        run: |
+          git config --global user.email "${{ env.mail }}"
+          git config --global user.name "${{ env.username }}"
+          git config --global pull.rebase false
+          git config --global credential.helper store
+          echo "https://${{ env.username }}:${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
+
+      - name: Create an empty commit
+        run: |
+          git clone https://${{ secrets.GH_TOKEN }}@github.com/${{ secrets.REPOSLUG }} temp
+          cd temp
+          git commit --allow-empty -m "[LOOP] Re-run CD for Testing bots"
+          git push 
