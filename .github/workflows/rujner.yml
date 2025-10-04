@@ -54,7 +54,7 @@ jobs:
       - name: Run the bot
         run: |
           cd CD 
-          python main.py
+          python bot.py
         timeout-minutes: 340  # Almost 6 hours for the bot itself
         continue-on-error: true
 
