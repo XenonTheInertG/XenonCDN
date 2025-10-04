@@ -1,9 +1,12 @@
 import os
 import logging
+import tempfile
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import google.generativeai as genai
 from dotenv import load_dotenv
+from PIL import Image
+import io
 
 load_dotenv()
 
@@ -125,22 +128,17 @@ async def process_image_doubt(update: Update, context: ContextTypes.DEFAULT_TYPE
         photo_file = await context.bot.get_file(photo.file_id)
         photo_bytes = await photo_file.download_as_bytearray()
         
-        uploaded_file = genai.upload_file_from_bytes(
-            file_data=bytes(photo_bytes),
-            mime_type='image/jpeg'
-        )
+        image = Image.open(io.BytesIO(photo_bytes))
         
         model = genai.GenerativeModel('gemini-2.0-flash-lite')
         
         prompt = SYSTEM_PROMPT + '\n\nStudent instruction: ' + instruction
         prompt += '\n\nAnalyze the image and provide a precise solution. Pay attention to any marked or circled portions.'
         
-        response = model.generate_content([prompt, uploaded_file])
+        response = model.generate_content([prompt, image])
         
         answer = response.text
         await update.message.reply_text('Solution:\n\n' + answer)
-        
-        uploaded_file.delete()
         
     except Exception as e:
         logger.error('Error: ' + str(e))
